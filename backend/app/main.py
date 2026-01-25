@@ -58,7 +58,7 @@ def health_check():
     return {"status": "healthy", "version": "0.1.0"}
 
 
-# Routers will be included here as we build them
-# from app.routers import upload, analysis
-# app.include_router(upload.router)
-# app.include_router(analysis.router)
+# Include routers
+from app.routers import upload, analysis
+app.include_router(upload.router)
+app.include_router(analysis.router)
