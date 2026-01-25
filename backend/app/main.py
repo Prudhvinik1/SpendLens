@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
+from app.core.opik_setup import init_opik
 from app.models.database import init_db
 
 
@@ -25,6 +26,10 @@ async def lifespan(app: FastAPI):
     print("Initializing database...")
     init_db()
     print("Database initialized.")
+
+    print("Initializing Opik observability...")
+    init_opik()
+    print("Opik initialized.")
 
     yield  # App runs here
 

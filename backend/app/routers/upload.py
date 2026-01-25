@@ -3,13 +3,12 @@ Upload router - handles statement file uploads and processing.
 
 POST /api/upload - Upload and process a statement file
 
-Since processing is synchronous for now, this endpoint:
+Processing flow (synchronous):
 1. Receives the file
 2. Parses it (auto-detecting format)
-3. Stores transactions in the database
-4. Returns immediately with the statement ID
-
-Later phases will add LLM categorization and analysis here.
+3. Categorizes transactions via LLM (batched)
+4. Stores everything in the database
+5. Returns with the statement ID
 """
 
 import uuid
@@ -22,6 +21,7 @@ from app.core.config import settings
 from app.models.database import Statement, Transaction, get_db
 from app.models.schemas import UploadResponse
 from app.services.parser import parse_statement
+from app.services.categorizer import categorize_transactions
 
 
 router = APIRouter(prefix="/api", tags=["upload"])
@@ -89,28 +89,61 @@ def upload_statement(
             error=parse_result.error_message
         )
 
-    # Store parsed transactions
+    # Prepare transactions for LLM categorization
+    transactions_for_llm = [
+        {
+            "description": tx.description,
+            "amount": tx.amount
+        }
+        for tx in parse_result.transactions
+    ]
+
+    # Categorize using LLM (batched, traced via Opik)
+    print(f"Categorizing {len(transactions_for_llm)} transactions via LLM...")
+    categorization_results = categorize_transactions(
+        transactions_for_llm,
+        statement_id=statement.id
+    )
+
+    # Create a lookup for categorization results by index
+    cat_by_index = {r.index: r for r in categorization_results}
+
+    # Store parsed transactions with LLM categories
     total_spent = 0.0
     total_income = 0.0
 
-    for parsed_tx in parse_result.transactions:
+    for idx, parsed_tx in enumerate(parse_result.transactions):
         # Track totals
         if parsed_tx.amount < 0:
             total_spent += abs(parsed_tx.amount)
         else:
             total_income += parsed_tx.amount
 
+        # Get LLM categorization result
+        cat_result = cat_by_index.get(idx)
+
+        if cat_result:
+            category = cat_result.category
+            confidence = cat_result.confidence
+            merchant = cat_result.merchant
+            needs_review = cat_result.needs_review
+        else:
+            # Fallback if LLM didn't return result for this index
+            category = parsed_tx.original_category.lower() if parsed_tx.original_category else "other"
+            confidence = 0.5 if parsed_tx.original_category else 0.0
+            merchant = parsed_tx.description
+            needs_review = True
+
         # Create transaction record
         transaction = Transaction(
             statement_id=statement.id,
             date=parsed_tx.date,
             description=parsed_tx.description,
+            merchant=merchant,
             amount=parsed_tx.amount,
-            # Category will be set by LLM in Phase 2
-            # For now, use original_category if available, otherwise "other"
-            category=parsed_tx.original_category.lower() if parsed_tx.original_category else "other",
-            category_confidence=0.5 if parsed_tx.original_category else 0.0,
-            needs_review=parsed_tx.original_category is None  # Flag for LLM categorization
+            category=category,
+            category_confidence=confidence,
+            needs_review=needs_review
         )
         db.add(transaction)
 
@@ -130,9 +163,12 @@ def upload_statement(
         UPLOAD_DIR.mkdir(exist_ok=True)
         (UPLOAD_DIR / unique_filename).write_bytes(content)
 
+    # Count how many need review
+    needs_review_count = sum(1 for r in categorization_results if r.needs_review)
+
     return UploadResponse(
         success=True,
-        message=f"Successfully parsed {len(parse_result.transactions)} transactions from {parse_result.format_name} statement",
+        message=f"Processed {len(parse_result.transactions)} transactions ({needs_review_count} need review)",
         statement_id=statement.id
     )
 
