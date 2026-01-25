@@ -7,8 +7,9 @@ Processing flow (synchronous):
 1. Receives the file
 2. Parses it (auto-detecting format)
 3. Categorizes transactions via LLM (batched)
-4. Stores everything in the database
-5. Returns with the statement ID
+4. Stores transactions in database
+5. Runs analysis (subscriptions, anomalies, insights)
+6. Returns with the statement ID
 """
 
 import uuid
@@ -22,6 +23,7 @@ from app.models.database import Statement, Transaction, get_db
 from app.models.schemas import UploadResponse
 from app.services.parser import parse_statement
 from app.services.categorizer import categorize_transactions
+from app.services.analyzer import analyze_statement
 
 
 router = APIRouter(prefix="/api", tags=["upload"])
@@ -163,12 +165,23 @@ def upload_statement(
         UPLOAD_DIR.mkdir(exist_ok=True)
         (UPLOAD_DIR / unique_filename).write_bytes(content)
 
+    # Run analysis (subscriptions, anomalies, insights)
+    print("Running analysis...")
+    try:
+        analysis_result = analyze_statement(db, statement.id)
+        insights_count = len(analysis_result.insights)
+        subscriptions_count = len(analysis_result.subscriptions)
+    except Exception as e:
+        print(f"Analysis failed: {e}")
+        insights_count = 0
+        subscriptions_count = 0
+
     # Count how many need review
     needs_review_count = sum(1 for r in categorization_results if r.needs_review)
 
     return UploadResponse(
         success=True,
-        message=f"Processed {len(parse_result.transactions)} transactions ({needs_review_count} need review)",
+        message=f"Processed {len(parse_result.transactions)} transactions, found {subscriptions_count} subscriptions, generated {insights_count} insights",
         statement_id=statement.id
     )
 
