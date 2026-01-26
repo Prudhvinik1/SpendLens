@@ -101,6 +101,57 @@ Components follow the shadcn/ui pattern. Use the `cn()` utility for class mergin
 - Follow the design system color palette
 - Use Tailwind utilities for spacing and layout
 
+## Deployment
+
+### Deploy to Vercel
+
+The easiest way to deploy SpendLens is using [Vercel](https://vercel.com):
+
+#### Option 1: Deploy via Vercel CLI
+
+```bash
+# Install Vercel CLI globally
+npm i -g vercel
+
+# Deploy
+vercel
+```
+
+#### Option 2: Deploy via GitHub Integration
+
+1. Push your code to GitHub
+2. Go to [vercel.com](https://vercel.com) and sign in
+3. Click "Add New Project"
+4. Import your GitHub repository
+5. Vercel will auto-detect Next.js and configure everything
+6. Click "Deploy"
+
+#### Option 3: Deploy via Vercel Dashboard
+
+1. Go to [vercel.com/new](https://vercel.com/new)
+2. Import your Git repository
+3. Vercel will automatically detect Next.js
+4. Configure environment variables if needed
+5. Click "Deploy"
+
+### Environment Variables
+
+If you need to configure environment variables (e.g., API endpoints), add them in the Vercel dashboard:
+
+1. Go to your project settings
+2. Navigate to "Environment Variables"
+3. Add your variables
+4. Redeploy
+
+### Build Settings
+
+Vercel will automatically:
+- Detect Next.js framework
+- Run `npm install` and `npm run build`
+- Deploy your application
+
+The `vercel.json` file is optional but included for any custom configurations.
+
 ## License
 
 MIT
