@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import '../styles/animations.css';
+
+:root {
+  /* Backgrounds */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #111111;
+  --bg-card: #1a1a1a;
+  --bg-card-hover: #222222;
+  
+  /* Accent Colors */
+  --accent-orange: #f97316;
+  --accent-orange-dim: #c2410c;
+  --accent-purple: #8b5cf6;
+  --accent-teal: #14b8a6;
+  --accent-red: #ef4444;
+  
+  /* Text */
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  
+  /* Borders */
+  --border-subtle: #27272a;
+  --border-accent: rgba(249, 115, 22, 0.2);
+  
+  /* Gradients for cards */
+  --gradient-purple: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  --gradient-orange: linear-gradient(135deg, #1a1a1a 0%, #2d1f1a 100%);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+

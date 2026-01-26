@@ -1,0 +1,44 @@
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-stagger {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-stagger:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.animate-stagger:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.animate-stagger:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.animate-stagger:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
