@@ -6,11 +6,13 @@ import { Header } from "@/components/layout/header";
 import { UploadZone } from "@/components/landing/upload-zone";
 import { FeatureCards } from "@/components/landing/feature-cards";
 import { Button } from "@/components/ui/button";
-import { uploadStatement } from "@/lib/api";
+import { uploadStatement, processDemoData } from "@/lib/api";
+import { Loader2 } from "lucide-react";
 
 export default function HomePage() {
   const router = useRouter();
   const [isUploading, setIsUploading] = useState(false);
+  const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleFileSelect = async (file: File) => {
@@ -32,32 +34,28 @@ export default function HomePage() {
     }
   };
 
-  const handleSampleData = async () => {
-    setIsUploading(true);
+  const handleSampleData = async (sampleId: string = "sample_bofa") => {
+    setIsDemoLoading(true);
     setError(null);
 
     try {
-      // Fetch sample data from the backend's sample_data folder
-      const response = await fetch("/sample_bofa.csv");
-      const blob = await response.blob();
-      const file = new File([blob], "sample_bofa.csv", { type: "text/csv" });
+      const response = await processDemoData(sampleId);
 
-      const uploadResponse = await uploadStatement(file);
-
-      if (uploadResponse.success && uploadResponse.statement_id) {
-        router.push(`/analyze/${uploadResponse.statement_id}`);
+      if (response.success && response.statement_id) {
+        router.push(`/analyze/${response.statement_id}`);
       } else {
-        setError(uploadResponse.error || "Failed to load sample data.");
+        setError(response.error || "Failed to load sample data.");
       }
     } catch (err) {
-      // If fetching sample file fails, show helpful message
       setError(
-        "Sample data not available. Please upload your own CSV file."
+        err instanceof Error ? err.message : "Demo processing failed. Is the backend running?"
       );
     } finally {
-      setIsUploading(false);
+      setIsDemoLoading(false);
     }
   };
+
+  const isLoading = isUploading || isDemoLoading;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -82,14 +80,32 @@ export default function HomePage() {
             error={error}
           />
 
-          <div className="text-center mt-6">
-            <Button
-              variant="outline"
-              onClick={handleSampleData}
-              disabled={isUploading}
-            >
-              Try with sample data
-            </Button>
+          <div className="flex flex-col items-center gap-3 mt-6">
+            <p className="text-text-muted text-sm">Or try with sample data:</p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => handleSampleData("sample_bofa")}
+                disabled={isLoading}
+                className="min-w-[140px]"
+              >
+                {isDemoLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
+                Bank of America
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleSampleData("sample_discover")}
+                disabled={isLoading}
+                className="min-w-[140px]"
+              >
+                {isDemoLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
+                Discover Card
+              </Button>
+            </div>
           </div>
         </div>
 

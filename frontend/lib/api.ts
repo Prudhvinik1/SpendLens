@@ -171,3 +171,33 @@ export async function getSupportedFormats(): Promise<SupportedFormat[]> {
   const data = await response.json();
   return data.formats;
 }
+
+export interface SampleData {
+  name: string;
+  filename: string;
+  id: string;
+}
+
+export async function getSampleData(): Promise<SampleData[]> {
+  const response = await fetch(`${API_BASE_URL}/api/sample-data`);
+
+  if (!response.ok) {
+    throw new Error("Failed to get sample data");
+  }
+
+  const data = await response.json();
+  return data.samples;
+}
+
+export async function processDemoData(sampleId: string): Promise<UploadResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/demo/${sampleId}`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: "Demo processing failed" }));
+    throw new Error(error.detail || "Demo processing failed");
+  }
+
+  return response.json();
+}
