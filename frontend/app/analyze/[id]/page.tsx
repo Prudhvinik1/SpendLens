@@ -244,7 +244,7 @@ export default function AnalyzePage() {
 
         {/* Subscriptions */}
         <div className="mb-8">
-          <SubscriptionList transactions={transactions} />
+          <SubscriptionList transactions={transactions} statementId={statementId} />
         </div>
 
         {/* Transactions table */}
